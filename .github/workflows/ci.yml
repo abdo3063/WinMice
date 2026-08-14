@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  signing-scripts:
+    runs-on: macos-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Signing-mode smoke tests
+        run: ./scripts/test-build-signing-mode.sh
+
+      - name: Missing-env fail-closed (import)
+        run: |
+          if env -u APPLE_DEVELOPER_ID_P12_BASE64 -u APPLE_DEVELOPER_ID_P12_PASSWORD \
+            ./scripts/import-signing-certificate.sh; then
+            echo "expected import-signing-certificate.sh to fail without secrets" >&2
+            exit 1
+          fi
+
+      - name: Missing-env fail-closed (notarize)
+        run: |
+          ./scripts/build-app.sh --version 0.0.0-ci
+          if env -u APPLE_API_KEY_ID -u APPLE_API_ISSUER_ID -u APPLE_API_KEY_P8 -u APPLE_TEAM_ID \
+            ./scripts/notarize-file.sh dist/WinMice.app; then
+            echo "expected notarize-file.sh to fail without secrets" >&2
+            exit 1
+          fi
+
+      - name: Ad-hoc app rejected by verifier
+        run: |
+          unset CODESIGN_IDENTITY || true
+          ./scripts/build-app.sh --version 0.0.0-ci
+          if ./scripts/verify-notarized-app.sh dist/WinMice.app; then
+            echo "expected verify-notarized-app.sh to reject ad-hoc app" >&2
+            exit 1
+          fi
+
+      - name: Pages home verifier
+        run: ./scripts/verify-pages-home.sh
+
+  unit-tests:
+    runs-on: macos-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Swift tests
+        run: swift test

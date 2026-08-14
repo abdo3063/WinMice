@@ -1,0 +1,241 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish GitHub Release + Homebrew tap after notarizing"
+        type: boolean
+        default: false
+      version:
+        description: "Version for workflow_dispatch dry runs (e.g. 1.0.2-rc1). Ignored on tag pushes."
+        type: string
+        default: "0.0.0-notarize-dry-run"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    timeout-minutes: 150
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        env:
+          DISPATCH_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            VERSION="${DISPATCH_VERSION}"
+            TAG="manual-${VERSION}"
+            PUBLISH="${{ inputs.publish }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            case "$TAG" in
+              v*) VERSION="${TAG#v}" ;;
+              *) echo "Tag must start with v" >&2; exit 1 ;;
+            esac
+            PUBLISH=true
+          fi
+          case "$VERSION" in
+            "") echo "Version must be non-empty" >&2; exit 1 ;;
+          esac
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "publish=$PUBLISH" >> "$GITHUB_OUTPUT"
+
+      - name: Require Apple signing secrets
+        env:
+          APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
+          APPLE_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: |
+          missing=0
+          for v in APPLE_DEVELOPER_ID_P12_BASE64 APPLE_DEVELOPER_ID_P12_PASSWORD \
+                   APPLE_TEAM_ID APPLE_API_KEY_ID APPLE_API_ISSUER_ID APPLE_API_KEY_P8; do
+            eval "val=\${$v}"
+            if [ -z "$val" ]; then
+              echo "Missing secret: $v" >&2
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Import Developer ID certificate
+        id: cert
+        env:
+          APPLE_DEVELOPER_ID_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
+          APPLE_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          IDENTITY="$(./scripts/import-signing-certificate.sh | tail -n 1)"
+          if [ -z "$IDENTITY" ]; then
+            echo "empty signing identity from import-signing-certificate.sh" >&2
+            exit 1
+          fi
+          echo "identity=$IDENTITY" >> "$GITHUB_OUTPUT"
+
+      - name: Build app
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          CODESIGN_IDENTITY: ${{ steps.cert.outputs.identity }}
+          WINMICE_REQUIRE_DEVELOPER_ID: "1"
+        run: ./scripts/build-app.sh --version "$VERSION"
+
+      - name: Verify bundle metadata
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: ./scripts/verify-bundle-metadata.sh dist/WinMice.app "$VERSION"
+
+      - name: Notarize app
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: ./scripts/notarize-file.sh dist/WinMice.app
+
+      - name: Verify notarized app
+        run: ./scripts/verify-notarized-app.sh dist/WinMice.app
+
+      - name: Package zip
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: ./scripts/package-release.sh "$VERSION"
+
+      - name: Install create-dmg
+        run: |
+          # Homebrew has no versioned create-dmg formula; log the resolved version for reproducibility.
+          brew install create-dmg
+          command -v create-dmg
+          create-dmg --version
+
+      - name: Package DMG
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: ./scripts/package-dmg.sh "$VERSION"
+
+      - name: Sign DMG
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          CODESIGN_IDENTITY: ${{ steps.cert.outputs.identity }}
+        run: |
+          [ -n "$CODESIGN_IDENTITY" ] || { echo "CODESIGN_IDENTITY is empty; refusing to sign release DMG" >&2; exit 1; }
+          codesign --force --timestamp --sign "$CODESIGN_IDENTITY" "dist/WinMice-${VERSION}.dmg"
+
+      - name: Notarize DMG
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: ./scripts/notarize-file.sh "dist/WinMice-${VERSION}.dmg"
+
+      - name: Verify notarized DMG
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: ./scripts/verify-notarized-dmg.sh "dist/WinMice-${VERSION}.dmg"
+
+      # Stapling rewrites the DMG in place, so the checksum below must run
+      # after signing/notarizing/stapling — it is the sha256 the cask pins.
+      - name: Checksum
+        id: sum
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          ZIP="dist/WinMice-${VERSION}.zip"
+          DMG="dist/WinMice-${VERSION}.dmg"
+          SHA=$(shasum -a 256 "$DMG" | awk '{print $1}')
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "dmg=$DMG" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifacts (dry run / debugging)
+        if: steps.ver.outputs.publish != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: WinMice-${{ steps.ver.outputs.version }}
+          path: |
+            ${{ steps.sum.outputs.zip }}
+            ${{ steps.sum.outputs.dmg }}
+          if-no-files-found: error
+
+      - name: Render release notes
+        if: steps.ver.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          sed "s/{{VERSION}}/${VERSION}/g" \
+            docs/release-notes-template.md > /tmp/release-notes.md
+
+      - name: Publish GitHub Release
+        if: steps.ver.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          ZIP: ${{ steps.sum.outputs.zip }}
+          DMG: ${{ steps.sum.outputs.dmg }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" "$DMG" --clobber
+          else
+            gh release create "$TAG" "$ZIP" "$DMG" \
+              --title "WinMice $VERSION" \
+              --notes-file /tmp/release-notes.md
+          fi
+
+      - name: Update Homebrew tap
+        id: tap
+        if: steps.ver.outputs.publish == 'true'
+        continue-on-error: true
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          SHA256: ${{ steps.sum.outputs.sha256 }}
+        run: |
+          if [ -z "${HOMEBREW_TAP_TOKEN}" ]; then
+            echo "HOMEBREW_TAP_TOKEN secret is not set" >&2
+            exit 1
+          fi
+          TAP_DIR="${RUNNER_TEMP}/homebrew-winmice"
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/anibalribeiro/homebrew-winmice.git" "$TAP_DIR"
+          ./scripts/update-homebrew-cask.sh \
+            "$TAP_DIR/Casks/winmice.rb" \
+            "$VERSION" \
+            "$SHA256"
+          cd "$TAP_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/winmice.rb
+          git diff --cached --quiet || git commit -m "winmice $VERSION"
+          git push
+
+      - name: Fail job if tap update failed
+        if: steps.ver.outputs.publish == 'true' && steps.tap.outcome == 'failure'
+        run: |
+          echo "GitHub Release was published, but Homebrew tap update failed." >&2
+          echo "Check HOMEBREW_TAP_TOKEN and the homebrew-winmice repo." >&2
+          exit 1
+
+      - name: Cleanup signing keychain
+        if: always()
+        run: |
+          if [ -f "${RUNNER_TEMP}/winmice-keychain-path" ]; then
+            KEYCHAIN="$(cat "${RUNNER_TEMP}/winmice-keychain-path")"
+            security delete-keychain "$KEYCHAIN" || true
+            rm -f "${RUNNER_TEMP}/winmice-keychain-path" \
+              "${RUNNER_TEMP}/winmice-signing.p12" \
+              "${RUNNER_TEMP}"/AuthKey_*.p8 \
+              "${RUNNER_TEMP}"/*.notarize.zip \
+              "${RUNNER_TEMP}"/*.notary.json || true
+          fi

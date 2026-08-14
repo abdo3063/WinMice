@@ -1,0 +1,24 @@
+WinMice {{VERSION}}
+==================
+
+Install
+-------
+1. Drag WinMice to the Applications folder (in this window).
+2. Eject this disk image.
+3. Open WinMice from Applications.
+4. Grant Accessibility when asked (WinMice → Settings → Permissions).
+
+Homebrew
+--------
+  brew tap anibalribeiro/winmice
+  brew trust anibalribeiro/winmice
+  brew install --cask winmice
+
+Homepage:
+https://anibalribeiro.cz/Winmice/
+
+Source and releases:
+https://github.com/anibalribeiro/WinMice
+
+This build is Developer ID signed and notarized by Apple. WinMice is MIT-licensed;
+see LICENSE and NOTICES.md in the repository.

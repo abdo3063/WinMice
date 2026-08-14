@@ -1,0 +1,10 @@
+.build/
+.swiftpm/
+dist/
+.DS_Store
+
+.worktrees/
+.superpowers/
+docs/superpowers/
+docs/designs/
+docs/plans/

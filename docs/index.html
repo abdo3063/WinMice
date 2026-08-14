@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="WinMice — Windows-style mouse behavior on Mac. Tiny native menu-bar utility for vector scrolling and side-button navigation.">
+  <title>WinMice — Windows-style mouse on Mac</title>
+  <link rel="canonical" href="https://anibalribeiro.cz/Winmice/">
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="brand">
+        <img src="icon.png" width="128" height="128" alt="WinMice icon">
+        <p class="brand-name">WinMice</p>
+      </div>
+      <h1>Windows-style mouse on Mac</h1>
+      <p class="lede">A tiny native menu-bar utility for middle-click vector scrolling and configurable back/forward side buttons. About 600&nbsp;KB. No Electron.</p>
+      <div class="cta-row">
+        <a class="cta" href="https://github.com/anibalribeiro/WinMice/releases/latest">Download</a>
+        <a class="cta cta-secondary" href="#get-it">Homebrew</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="demo-band" aria-label="Product demo">
+      <div class="demo-mock" role="img" aria-label="Animated demo of middle-click vector scrolling">
+        <div class="page">
+          <div class="lines">
+            <span style="width:92%"></span>
+            <span style="width:84%"></span>
+            <span style="width:88%"></span>
+            <span style="width:70%"></span>
+            <span style="width:95%"></span>
+            <span style="width:78%"></span>
+            <span style="width:90%"></span>
+            <span style="width:66%"></span>
+            <span style="width:86%"></span>
+            <span style="width:72%"></span>
+          </div>
+        </div>
+        <div class="indicator" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="section wrap" aria-labelledby="what-heading">
+      <h2 id="what-heading">What it does</h2>
+      <p class="section-lede">Two mouse behaviors Mac never quite matched — until now.</p>
+      <div class="features">
+        <article class="feature">
+          <h3>Middle-click vector scroll</h3>
+          <p>Click the middle button, move away from the anchor, and scroll by direction and distance — Hold to Scroll or Hold to Start.</p>
+          <img src="assets/settings-scroll.jpg" width="1000" height="666" alt="WinMice Settings showing scrolling options" loading="lazy" decoding="async">
+        </article>
+        <article class="feature">
+          <h3>Back and forward side buttons</h3>
+          <p>Map buttons 4 and 5 (or your own) to system-wide swipe or ⌘[ / ⌘] navigation, on press or release.</p>
+          <img src="assets/settings-nav.jpg" width="1000" height="666" alt="WinMice Settings showing back and forward button mapping" loading="lazy" decoding="async">
+        </article>
+      </div>
+    </section>
+
+    <section class="tiny wrap" aria-labelledby="tiny-heading">
+      <h2 id="tiny-heading" class="visually-hidden">Why it’s tiny</h2>
+      <p>Native Swift and AppKit. One lightweight menu-bar process. No bundled runtime.</p>
+    </section>
+
+    <section class="section get-it wrap" id="get-it" aria-labelledby="get-heading">
+      <h2 id="get-heading">Get it</h2>
+      <p class="section-lede">Pick a path — both are first-class.</p>
+
+      <h3>Download</h3>
+      <p><a class="cta" href="https://github.com/anibalribeiro/WinMice/releases/latest">Download latest release</a></p>
+      <p class="note">Open the DMG, drag <code>WinMice.app</code> to <code>/Applications</code>, then open it. Grant <strong>Accessibility</strong> when asked. Release builds are Developer ID signed and notarized by Apple.</p>
+
+      <h3>Homebrew</h3>
+      <pre><code>brew tap anibalribeiro/winmice
+brew trust anibalribeiro/winmice
+brew install --cask winmice</code></pre>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <nav aria-label="Footer">
+        <a href="https://github.com/anibalribeiro/WinMice">GitHub</a>
+        <a href="https://github.com/anibalribeiro/WinMice/releases">Releases</a>
+        <a href="https://paypal.me/anibalccribeiro">Buy me a coffee</a>
+      </nav>
+      <p>WinMice is MIT-licensed. Full demo video coming later — for now, the loop above is a stylized preview of scrolling in motion.</p>
+    </div>
+  </footer>
+</body>
+</html>
